@@ -1,0 +1,5 @@
+USE laplateforme;
+
+SELECT nom, prenom, age
+FROM etudiant
+ORDER BY age DESC;
