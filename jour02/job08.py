@@ -1,67 +1,140 @@
 import mysql.connector
 
-class GestionnaireZoo:
-    def __init__(self):
-        self.connexion = mysql.connector.connect(
-            host="localhost",
-            user="root",
-            password="",
-            database="zoo"
+def initialiser_base_de_donnees():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS animal (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            nom VARCHAR(255) NOT NULL,
+            race VARCHAR(255) NOT NULL,
+            id_cage INT,
+            date_naissance DATE NOT NULL,
+            pays_origine VARCHAR(255) NOT NULL,
+            FOREIGN KEY (id_cage) REFERENCES cage(id)
         )
-        self.curseur = self.connexion.cursor()
+    ''')
 
-    def ajouter_animal(self, nom, race, id_cage, date_naissance, pays_origine):
-        requete = "INSERT INTO animal (nom, race, id_cage, date_naissance, pays_origine) VALUES (%s, %s, %s, %s, %s)"
-        valeurs = (nom, race, id_cage, date_naissance, pays_origine)
-        self.curseur.execute(requete, valeurs)
-        self.connexion.commit()
-        print(f"Animal {nom} ajouté avec succès.")
+    cursor.execute('''
+        CREATE TABLE IF NOT EXISTS cage (
+            id INT AUTO_INCREMENT PRIMARY KEY,
+            superficie FLOAT NOT NULL,
+            capacite_max INT NOT NULL
+        )
+    ''')
 
-    def supprimer_animal(self, id_animal):
-        requete = "DELETE FROM animal WHERE id = %s"
-        valeurs = (id_animal,)
-        self.curseur.execute(requete, valeurs)
-        self.connexion.commit()
-        print(f"Animal avec l'ID {id_animal} supprimé avec succès.")
+    conn.commit()
+    conn.close()
+    
+def ajouter_cage(superficie, capacite_max):
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
 
-    def modifier_animal(self, id_animal, nom, race, id_cage, date_naissance, pays_origine):
-        requete = "UPDATE animal SET nom = %s, race = %s, id_cage = %s, date_naissance = %s, pays_origine = %s WHERE id = %s"
-        valeurs = (nom, race, id_cage, date_naissance, pays_origine, id_animal)
-        self.curseur.execute(requete, valeurs)
-        self.connexion.commit()
-        print(f"Animal avec l'ID {id_animal} modifié avec succès.")
+    cursor.execute('''
+        INSERT INTO cage (superficie, capacite_max)
+        VALUES (%s, %s)
+    ''', (superficie, capacite_max))
 
-    def afficher_liste_animaux(self):
-        requete = "SELECT * FROM animal"
-        self.curseur.execute(requete)
-        resultats = self.curseur.fetchall()
-        print("\nListe des animaux présents dans le zoo :")
-        for row in resultats:
-            print(row)
+    conn.commit()
+    conn.close()
+    
+def ajouter_animal(nom, race, id_cage, date_naissance, pays_origine):
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
 
-    def afficher_animaux_cages(self):
-        requete = "SELECT a.*, c.superficie, c.capacite_max FROM animal a JOIN cage c ON a.id_cage = c.id"
-        self.curseur.execute(requete)
-        resultats = self.curseur.fetchall()
-        print("\nAnimaux dans les cages avec informations sur les cages :")
-        for row in resultats:
-            print(row)
+    cursor.execute('''
+        INSERT INTO animal (nom, race, id_cage, date_naissance, pays_origine)
+        VALUES (%s, %s, %s, %s, %s)
+    ''', (nom, race, id_cage, date_naissance, pays_origine))
 
-    def calculer_superficie_totale(self):
-        requete = "SELECT SUM(superficie) FROM cage"
-        self.curseur.execute(requete)
-        resultat = self.curseur.fetchone()
-        superficie_totale = resultat[0] if resultat[0] is not None else 0
-        print(f"\nLa superficie totale de toutes les cages est de {superficie_totale} m**2.")
+    conn.commit()
+    conn.close()
 
-    def fermer_connexion(self):
-        self.curseur.close()
-        self.connexion.close()
+def afficher_animaux():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
 
-gestionnaire_zoo = GestionnaireZoo()
-gestionnaire_zoo.ajouter_animal("chat", "Félin", 1, "2020-04-01", "Afrique")
-gestionnaire_zoo.ajouter_animal("cheval", "Mammifère", 2, "2015-02-21", "Asie")
-gestionnaire_zoo.afficher_liste_animaux()
-gestionnaire_zoo.afficher_animaux_cages()
-gestionnaire_zoo.calculer_superficie_totale()
-gestionnaire_zoo.fermer_connexion()
+    cursor.execute('''
+        SELECT * FROM animal
+    ''')
+    animaux = cursor.fetchall()
+
+    for animal in animaux:
+        print(animal)
+
+    conn.close()
+
+
+def afficher_animaux_par_cage():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT c.id, c.superficie, c.capacite_max, a.*
+        FROM cage c
+        LEFT JOIN animal a ON c.id = a.id_cage
+    ''')
+    animaux_par_cage = cursor.fetchall()
+
+    for animal_cage in animaux_par_cage:
+        print(animal_cage)
+
+    conn.close()
+
+
+def calculer_superficie_totale():
+    conn = mysql.connector.connect(
+        host="localhost",
+        user="root",
+        password="R@ph@e?13*?",
+        database="zoo"
+    )
+    cursor = conn.cursor()
+
+    cursor.execute('''
+        SELECT SUM(superficie) FROM cage
+    ''')
+    superficie_totale = cursor.fetchone()[0]
+
+    print("Superficie totale des cages :", superficie_totale)
+
+    conn.close()
+
+initialiser_base_de_donnees()
+
+ajouter_cage(10.5, 5)
+ajouter_cage(15.0, 8)
+
+ajouter_animal("chat", "Félin", 1, "2020-01-15", "Afrique")
+ajouter_animal("Girafe", "Mammifère", 2, "2019-05-20", "Afrique")
+ajouter_animal("Panda", "Ours", 2, "2021-03-10", "Chine")
+
+afficher_animaux()
+afficher_animaux_par_cage()
+calculer_superficie_totale()
